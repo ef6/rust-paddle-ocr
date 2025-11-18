@@ -3,6 +3,7 @@ use log::{error, info};
 use rust_paddle_ocr::{OcrEngineManager, OcrError, OcrResult};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use std::io::{self, Write};
 
 // 根据feature flag选择不同版本的模型
 #[cfg(feature = "v5")]
@@ -51,6 +52,10 @@ struct Args {
     /// 显示模型版本信息
     #[arg(long)]
     version_info: bool,
+
+    /// 启动交互模式
+    #[arg(short = 's', long = "server")]
+    interactive: bool,
 }
 
 // 文本识别结果的JSON表示
@@ -79,15 +84,6 @@ fn main() -> OcrResult<()> {
         return Ok(());
     }
 
-    // 检查是否提供了图片路径
-    let image_path = match &args.path {
-        Some(path) => path,
-        None => {
-            eprintln!("Error: Image path is required for OCR processing. Use --path to specify the image file.");
-            std::process::exit(1);
-        }
-    };
-
     // 配置日志
     if args.verbose {
         std::env::set_var("RUST_LOG", "info");
@@ -98,23 +94,41 @@ fn main() -> OcrResult<()> {
 
     info!("Starting PaddleOCR command line tool");
 
-    // 检查输入文件是否存在
-    if !image_path.exists() {
-        error!("Input image file does not exist: {:?}", image_path);
-        return Err(OcrError::InputError(format!(
-            "Input file not found: {:?}",
-            image_path
-        )));
+    // 检查是否使用交互模式
+    if args.interactive {
+        run_interactive_mode(args.mode, args.verbose)?;
+    } else {
+        // 检查是否提供了图片路径
+        let image_path = match &args.path {
+            Some(path) => path,
+            None => {
+                eprintln!("Error: Image path is required for OCR processing. Use --path to specify the image file.");
+                eprintln!("Use --help for more information.");
+                std::process::exit(1);
+            }
+        };
+
+        // 检查输入文件是否存在
+        if !image_path.exists() {
+            error!("Input image file does not exist: {:?}", image_path);
+            return Err(OcrError::InputError(format!(
+                "Input file not found: {:?}",
+                image_path
+            )));
+        }
+
+        process_ocr(&args, image_path)?;
+        
+        info!("OCR process completed");
     }
-
-    let result = process_ocr(&args, image_path);
-
-    info!("OCR process completed");
-    result
+    Ok(())
 }
 
-fn process_ocr(args: &Args, image_path: &PathBuf) -> OcrResult<()> {
-    // 直接使用字节数据初始化OCR引擎
+fn run_interactive_mode(mode: OutputMode, verbose: bool) -> OcrResult<()> {
+    println!("PaddleOCR Interactive Mode Started");
+    println!("Enter image file paths to process (type 'exit' or 'quit' to exit):");
+
+    // 初始化OCR引擎
     info!(
         "Initializing OCR engine from embedded PP-OCR{} models...",
         models::VERSION
@@ -124,6 +138,92 @@ fn process_ocr(args: &Args, image_path: &PathBuf) -> OcrResult<()> {
         false, // merge_boxes
         1,     // merge_threshold
     )?;
+
+    loop {
+        print!("> ");
+        io::stdout().flush().unwrap(); // 确保提示符立即显示
+
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).unwrap();
+        let input = input.trim();
+
+        // 检查退出命令
+        if input.eq_ignore_ascii_case("exit") || input.eq_ignore_ascii_case("quit") {
+            println!("Exiting interactive mode...");
+            break;
+        }
+
+        // 检查是否为空输入
+        if input.is_empty() {
+            continue;
+        }
+
+        // 尝试将输入作为路径处理
+        let path = PathBuf::from(input);
+
+        // 检查文件是否存在
+        if !path.exists() {
+            eprintln!("Error: File does not exist: {}", input);
+            continue;
+        }
+
+        // 检查是否为图片文件
+        let extension = path.extension()
+            .and_then(|ext| ext.to_str())
+            .map(|ext| ext.to_lowercase())
+            .unwrap_or_default();
+        
+        if !["jpg", "jpeg", "png", "bmp", "tiff", "webp"].contains(&extension.as_str()) {
+            eprintln!("Warning: File does not appear to be an image: {}", input);
+            print!("Do you want to continue? (y/N): ");
+            io::stdout().flush().unwrap();
+            
+            let mut confirm = String::new();
+            io::stdin().read_line(&mut confirm).unwrap();
+            let confirm = confirm.trim();
+            
+            if !confirm.eq_ignore_ascii_case("y") && !confirm.eq_ignore_ascii_case("yes") {
+                continue;
+            }
+        }
+
+        // 处理OCR
+        match process_ocr_with_mode(&path, &mode, verbose) {
+            Ok(_) => {
+                info!("OCR processing completed successfully.");
+            },
+            Err(e) => {
+                error!("Error processing image: {}", e);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn process_ocr(args: &Args, image_path: &PathBuf) -> OcrResult<()> {
+    // 初始化OCR引擎
+    info!(
+        "Initializing OCR engine from embedded PP-OCR{} models...",
+        models::VERSION
+    );
+    OcrEngineManager::initialize_with_config_and_bytes(
+        DET_MODEL, REC_MODEL, KEYS_DATA, 12,    // rect_border_size
+        false, // merge_boxes
+        1,     // merge_threshold
+    )?;
+
+    process_ocr_with_mode(image_path, &args.mode, args.verbose)
+}
+
+fn process_ocr_with_mode(image_path: &PathBuf, mode: &OutputMode, verbose: bool) -> OcrResult<()> {
+    // 配置日志
+    if verbose {
+        std::env::set_var("RUST_LOG", "info");
+    } else {
+        std::env::set_var("RUST_LOG", "error");
+    }
+    env_logger::init_from_env(env_logger::Env::default());
 
     // 加载图像
     info!("Loading image from {:?}...", image_path);
@@ -139,7 +239,7 @@ fn process_ocr(args: &Args, image_path: &PathBuf) -> OcrResult<()> {
     };
 
     // 根据输出模式处理结果
-    match args.mode {
+    match mode {
         OutputMode::Json => {
             info!("Processing in JSON mode...");
 
@@ -219,3 +319,6 @@ fn process_ocr(args: &Args, image_path: &PathBuf) -> OcrResult<()> {
 
     Ok(())
 }
+
+
+
