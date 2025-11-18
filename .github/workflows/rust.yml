@@ -19,70 +19,70 @@ jobs:
       matrix:
         include:
           # amd64架构 - 两个版本
-          - os: ubuntu-latest
-            artifact_name: ocr
-            asset_name: ocr-v4-linux-amd64
-            target: x86_64-unknown-linux-gnu
-            features: ""
+          #- os: ubuntu-latest
+          #  artifact_name: ocr
+          #  asset_name: ocr-v4-linux-amd64
+          #  target: x86_64-unknown-linux-gnu
+          #  features: ""
           - os: ubuntu-latest
             artifact_name: ocr
             asset_name: ocr-v5-linux-amd64
             target: x86_64-unknown-linux-gnu
             features: "--features v5"
-          - os: windows-2022
-            artifact_name: ocr.exe
-            asset_name: ocr-v4-windows-amd64.exe
-            target: x86_64-pc-windows-msvc
-            features: ""
-          - os: windows-2022
-            artifact_name: ocr.exe
-            asset_name: ocr-v5-windows-amd64.exe
-            target: x86_64-pc-windows-msvc
-            features: "--features v5"
-          - os: macos-latest
-            artifact_name: ocr
-            asset_name: ocr-v4-macos-amd64
-            target: x86_64-apple-darwin
-            features: ""
-          - os: macos-latest
-            artifact_name: ocr
-            asset_name: ocr-v5-macos-amd64
-            target: x86_64-apple-darwin
-            features: "--features v5"
-          
-          # arm64架构 - 两个版本
-          - os: ubuntu-latest
-            artifact_name: ocr
-            asset_name: ocr-v4-linux-arm64
-            target: aarch64-unknown-linux-gnu
-            features: ""
-          - os: ubuntu-latest
-            artifact_name: ocr
-            asset_name: ocr-v5-linux-arm64
-            target: aarch64-unknown-linux-gnu
-            features: "--features v5"
-          - os: macos-latest
-            artifact_name: ocr
-            asset_name: ocr-v4-macos-arm64
-            target: aarch64-apple-darwin
-            features: ""
-          - os: macos-latest
-            artifact_name: ocr
-            asset_name: ocr-v5-macos-arm64
-            target: aarch64-apple-darwin
-            features: "--features v5"
-          
-          # 32位架构 - 两个版本
-          - os: windows-2022
-            artifact_name: ocr.exe
-            asset_name: ocr-v4-windows-x86.exe
-            target: i686-pc-windows-msvc
-            features: ""
-          - os: windows-2022
-            artifact_name: ocr.exe
-            asset_name: ocr-v5-windows-x86.exe
-            target: i686-pc-windows-msvc
-            features: "--features v5"
+          #- os: windows-2022
+          #  artifact_name: ocr.exe
+          #  asset_name: ocr-v4-windows-amd64.exe
+          #  target: x86_64-pc-windows-msvc
+          #  features: ""
+          #- os: windows-2022
+          #  artifact_name: ocr.exe
+          #  asset_name: ocr-v5-windows-amd64.exe
+          #  target: x86_64-pc-windows-msvc
+          #  features: "--features v5"
+          #- os: macos-latest
+          #  artifact_name: ocr
+          #  asset_name: ocr-v4-macos-amd64
+          #  target: x86_64-apple-darwin
+          #  features: ""
+          #- os: macos-latest
+          #  artifact_name: ocr
+          #  asset_name: ocr-v5-macos-amd64
+          #  target: x86_64-apple-darwin
+          #  features: "--features v5"
+          #
+          ## arm64架构 - 两个版本
+          #- os: ubuntu-latest
+          #  artifact_name: ocr
+          #  asset_name: ocr-v4-linux-arm64
+          #  target: aarch64-unknown-linux-gnu
+          #  features: ""
+          #- os: ubuntu-latest
+          #  artifact_name: ocr
+          #  asset_name: ocr-v5-linux-arm64
+          #  target: aarch64-unknown-linux-gnu
+          #  features: "--features v5"
+          #- os: macos-latest
+          #  artifact_name: ocr
+          #  asset_name: ocr-v4-macos-arm64
+          #  target: aarch64-apple-darwin
+          #  features: ""
+          #- os: macos-latest
+          #  artifact_name: ocr
+          #  asset_name: ocr-v5-macos-arm64
+          #  target: aarch64-apple-darwin
+          #  features: "--features v5"
+          #
+          ## 32位架构 - 两个版本
+          #- os: windows-2022
+          #  artifact_name: ocr.exe
+          #  asset_name: ocr-v4-windows-x86.exe
+          #  target: i686-pc-windows-msvc
+          #  features: ""
+          #- os: windows-2022
+          #  artifact_name: ocr.exe
+          #  asset_name: ocr-v5-windows-x86.exe
+          #  target: i686-pc-windows-msvc
+          #  features: "--features v5"
     
     steps:
       - uses: actions/checkout@v4
