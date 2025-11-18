@@ -217,14 +217,6 @@ fn process_ocr(args: &Args, image_path: &PathBuf) -> OcrResult<()> {
 }
 
 fn process_ocr_with_mode(image_path: &PathBuf, mode: &OutputMode, verbose: bool) -> OcrResult<()> {
-    // 配置日志
-    if verbose {
-        std::env::set_var("RUST_LOG", "info");
-    } else {
-        std::env::set_var("RUST_LOG", "error");
-    }
-    env_logger::init_from_env(env_logger::Env::default());
-
     // 加载图像
     info!("Loading image from {:?}...", image_path);
     let img = match image::open(image_path) {
