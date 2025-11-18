@@ -418,6 +418,7 @@ cargo build --release --features v5
 ```
 选项:
   -p, --path <IMAGE_PATH>  要识别的图像路径
+  -s, --server             交互模式
   -m, --mode <MODE>        输出模式: json(详细) 或 text(简单) [默认: text]
   -v, --verbose            是否显示详细日志
       --version-info       显示模型版本信息
